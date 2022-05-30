@@ -25,13 +25,12 @@ export default (params: { mainWindow: BrowserWindow; settings: any }) => {
             autoUpdater.checkForUpdates();
           } else if (args.action === 'install') {
             debug('installing update');
-
-            appEvents.emit('install-update');
-
-            const openedWindows = BrowserWindow.getAllWindows();
-            for (const window of openedWindows)  window.close();
-
-            autoUpdater.quitAndInstall();
+            app.removeAllListeners('window-all-closed');
+            params.mainWindow.removeAllListeners('close');
+            setTimeout(() => { autoUpdater.quitAndInstall(); app.exit(); }, 10_000);
+            // autoUpdater.quitAndInstall();
+            // TODO: based on https://github.com/electron-userland/electron-builder/issues/6058#issuecomment-1130344017 (not yet tested since we don't have signed builds yet for macos)
+            // app.exit();
           }
         } catch (error) {
           event.sender.send('autoUpdate', { error });
