@@ -27,7 +27,7 @@ dmg:
 
 protocols:
   name: Ferdium-Alphrag
-  schemes: [ferdium]
+  schemes: [ferdium-alphrag]
 
 asarUnpack:
   - ./recipes
