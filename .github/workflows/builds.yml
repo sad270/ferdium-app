@@ -254,15 +254,18 @@ jobs:
       - name: Run linter and tests
         run: npm run lint && npm run test
       - name: Build Ferdium without publish for any branch not 'nightly' and not 'release'
-        if: ${{ env.GIT_BRANCH_NAME != 'nightly' && env.GIT_BRANCH_NAME != 'release' }}
+        if: ${{ env.GIT_BRANCH_NAME != 'nightly' && env.GIT_BRANCH_NAME != 'release' && env.GIT_BRANCH_NAME != 'Alphrag-local-release' }}
         run: npm run build -- --publish never
         shell: bash
       # DISABLE SNAPCRAFT
       - name: Build Ferdium with publish for 'nightly' branch
-        if: ${{ env.GIT_BRANCH_NAME == 'nightly' }}
+        if: ${{ env.GIT_BRANCH_NAME == 'nightly' || env.GIT_BRANCH_NAME == 'Alphrag-local-release' }}
         env:
           GH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
+          # Test to build with certificate
+          CSC_IDENTITY_AUTO_DISCOVERY: true
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         run: |
           npm run build -- --publish always
         shell: bash
@@ -353,9 +356,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: true
-          # TODO: Commented out the code signing process for now (so as to at least get unsigned nightlies available for testing)
-          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
+          # TODO: Change back to windows cert if needed
+          WIN_CSC_LINK: ${{ secrets.CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
       - name: Build Ferdium with publish for 'release' branch
         if: ${{ env.GIT_BRANCH_NAME == 'release' }}
         run: npm run build -- --publish always
