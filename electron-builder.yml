@@ -23,7 +23,7 @@ dmg:
 
 # TODO: When we have a registered developer account we need to uncomment this line so that the signing process can occur but without the notarization.
 # This is the notarization which would allow to have the DMG analysed so that it can be opened straight away after download.
-# afterSign: ./build-helpers/notarize.js
+afterSign: ./build-helpers/notarize.js
 
 protocols:
   name: Ferdium-Alphrag
