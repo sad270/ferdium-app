@@ -356,9 +356,8 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.PUBLISH_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: true
-          # TODO: Change back to windows cert if needed
-          WIN_CSC_LINK: ${{ secrets.CSC_LINK }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          WIN_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
       - name: Build Ferdium with publish for 'release' branch
         if: ${{ env.GIT_BRANCH_NAME == 'release' }}
         run: npm run build -- --publish always
