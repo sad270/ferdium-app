@@ -10,6 +10,10 @@ publish:
 nsis:
   perMachine: false
   oneClick: true
+  artifactName: "${productName}-${os}-AutoSetup-${version}-${arch}.${ext}"
+
+portable:
+  artifactName: "${productName}-${os}-Portable-${version}-${arch}.${ext}"
 
 dmg:
   background: ./build-helpers/images/dmgInstaller.tiff
@@ -20,6 +24,15 @@ dmg:
       { x: 380, y: 240, type: link, path: /Applications },
       { x: 122, y: 240, type: file },
     ]
+  artifactName: "${productName}-${os}-DMG-${version}-${arch}.${ext}"
+
+appImage:
+  artifactName: "${productName}-${os}-${linuxPackageName}-${version}-${arch}.${ext}"
+
+deb:
+  artifactName: "${productName}-${os}-${channel}-${arch}.${ext}"
+
+
 
 # TODO: When we have a registered developer account we need to uncomment this line so that the signing process can occur but without the notarization.
 # This is the notarization which would allow to have the DMG analysed so that it can be opened straight away after download.
@@ -42,29 +55,26 @@ mac:
   darkModeSupport: true
   entitlements: "./build-helpers/entitlements.mas.plist"
   entitlementsInherit: "./build-helpers/entitlements.mas.inherit.plist"
+  artifactName: "${productName}-${os}-${macBundleIdentifier}-${version}-${arch}.${ext}"
   target:
     - target: dmg
       arch: [x64, arm64]
-      artifactName: "${productName}-${os}-${channel}-${version}-${arch}.${ext}"
     - target: zip
       arch: [x64, arm64]
-      artifactName: "${productName}-${os}-${macBundleIdentifier}-${version}-${arch}.${ext}"
   extendInfo:
     NSCameraUsageDescription: "This app requires camera access for video chats"
     NSMicrophoneUsageDescription: "This app requires microphone access for voice chats"
 
 win:
+  artifactName: "${productName}-${os}-Installer-${version}-${arch}.${ext}"
   icon: ./build-helpers/images/icon.ico
   target:
     - target: nsis
       arch: [x64, ia32]
-      artifactName: "${productName}-${os}-AutoSetup-${version}-${arch}.${ext}"
     - target: msi
       arch: [x64, ia32]
-      artifactName: "${productName}-${os}-Installer-${version}-${arch}.${ext}"
     - target: portable
       arch: [x64, ia32]
-      artifactName: "${productName}-${os}-Portable-${version}-${arch}.${ext}"
   # The name of the CN appearing in the certificate must be present in the publisherName list below
   publisherName: ["Ferdium Contributors", "Ambroise Grau"]
 
@@ -75,13 +85,11 @@ linux:
   synopsis: "Messaging app for WhatsApp, Slack, Telegram, Gmail, Hangouts and many many more."
   # Note: Please keep the description as a single-line string, as this will become the Comment in the ferdium.desktop Linux launcher file, which requires a single line.
   description: 'Ferdium is your messaging app / former heir to the throne of Austria-Hungary and combines chat & messaging services into one application. Ferdium currently supports Slack, WhatsApp, Gmail, Facebook Messenger, Telegram, Google Hangouts, GroupMe, Skype and many more. You can download Ferdium for free for Mac, Windows, and Linux. For enabling webcam access you need to connect "camera" plug to snap, and for microphone with PulseAudio - "audio-record" plug. This can be done in Snap GUI or via command: `snap connect ferdium:camera; snap connect ferdium:audio-record`.'
+  artifactName: "${productName}-${os}-${buildVersion}-${arch}.${ext}"
   target:
     - target: AppImage
-      artifactName: "${productName}-${os}-${linuxPackageName}-${version}-${arch}.${ext}"
     - target: deb
       arch: [x64, arm64, armv7l]
-      artifactName: "${productName}-${os}-${shortVersion}-${arch}.${ext}"
     - target: tar.gz
-      artifactName: "${productName}-${os}-${buildVersion}-${version}-${arch}.${ext}"
     - target: rpm
     - target: freebsd
