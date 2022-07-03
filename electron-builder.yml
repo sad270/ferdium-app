@@ -39,7 +39,7 @@ deb:
 
 rpm:
   # Prevent creation of symlinks in /usr/lib/.build_id to avoid conflicts with other electron-based app having the symlink to chrome-sandbox
-  fpm: [--rpm-rpmbuild-define '_build_id_links none']
+  fpm: ["--rpm-rpmbuild-define=_build_id_links none"]
 
 # TODO: When we have a registered developer account we need to uncomment this line so that the signing process can occur but without the notarization.
 # This is the notarization which would allow to have the DMG analysed so that it can be opened straight away after download.
