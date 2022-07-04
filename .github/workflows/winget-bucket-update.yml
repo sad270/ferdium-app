@@ -22,7 +22,7 @@ jobs:
             $tagInc = "nightly"
             $package = "Ferdium.Ferdium.Nightly"
           }
-          elsif ("${{ contains(github.event.inputs.message, '[beta]') }}") {
+          elseif ("${{ contains(github.event.inputs.message, '[beta]') }}") {
             $preRel = $True
             $tagInc = "beta"
             $package = "Ferdium.Ferdium.Beta"
