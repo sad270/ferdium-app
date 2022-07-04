@@ -2,23 +2,27 @@ name: Update Ferdium package on winget
 
 on:
   workflow_dispatch:
+    inputs:
+      message:
+        description: "Channel to update"
+        required: false
   release:
     types: [published]
 
 jobs:
-  retrieve_values:
+  manual_winget_update:
     runs-on: windows-latest
     name: "Manual winget update: ${{ github.event.inputs.message }}"
     if: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
       - name: "Get release tag"
         run: |
-          if ('${{ contains(github.event.inputs.message, "[nightly]") }}') {
+          if ("${{ contains(github.event.inputs.message, '[nightly]') }}") {
             $preRel = $True
             $tagInc = "nightly"
             $package = "Ferdium.Ferdium.Nightly"
           }
-          elsif ('${{ contains(github.event.inputs.message, "[beta]") }}') {
+          elsif ("${{ contains(github.event.inputs.message, '[beta]') }}") {
             $preRel = $True
             $tagInc = "beta"
             $package = "Ferdium.Ferdium.Beta"
