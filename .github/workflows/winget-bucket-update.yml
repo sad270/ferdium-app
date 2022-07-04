@@ -1,0 +1,120 @@
+name: Update Ferdium package on winget
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  retrieve_values:
+    runs-on: windows-latest
+    name: "Manual winget update: ${{ github.event.inputs.message }}"
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    steps:
+      - name: "Get release tag"
+        run: |
+          if ('${{ contains(github.event.inputs.message, "[nightly]") }}') {
+            $preRel = $True
+            $tagInc = "nightly"
+            $package = "Ferdium.Ferdium.Nightly"
+          }
+          elsif ('${{ contains(github.event.inputs.message, "[beta]") }}') {
+            $preRel = $True
+            $tagInc = "beta"
+            $package = "Ferdium.Ferdium.Beta"
+          }
+          else
+          {
+            $preRel = $False
+            $tagInc = ""
+            $package = "Ferdium.Ferdium"
+          }
+          $release=Invoke-RestMethod -Uri 'https://api.github.com/repos/ferdium/ferdium-app/releases'
+          $lastCorrectTag = $release | Where-Object -Property prerelease -eq $preRel | Where-Object -Property tag_name -match '$tagInc' | Select -First 1 | Select -ExpandProperty tag_name
+          $lastVersion = $($lastCorrectTag.Trim('v'))
+
+          echo "last_tag=$lastCorrectTag" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "last_version=$lastVersion" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo "PACKAGE_NAME=$package" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: "Verify if version already exist on winget"
+        run: |
+          $lastVersion = '${{ env.last_version }}'
+          $versions = winget show --id '${{ env.PACKAGE_NAME }}' --versions --accept-source-agreements
+          if ( $versions.Contains('${{ env.last_version }}') ) {
+            echo "version_exists='true'" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          }
+      - name: "Publish update"
+        if: ${{ env.version_exists != 'true' }}
+        run: |
+          $release=Invoke-RestMethod -Uri 'https://api.github.com/repos/ferdium/ferdium-app/releases'
+          $assets = $release | Where-Object -Property tag_name -match '${{ env.last_tag }}' | Select -First 1 | Select -ExpandProperty assets
+
+          $urlMsi64 = $assets | Where-Object -Property name -match '-x64.msi' | Select -ExpandProperty browser_download_url
+          $urlMsi86 = $assets | Where-Object -Property name -match '-ia32.msi' | Select -ExpandProperty browser_download_url
+          $urlAutoSetup = $assets | Where-Object -Property name -CLike '*-win-AutoSetup*.exe' | Select -ExpandProperty browser_download_url
+
+          $installerUrls = "$urlMsi64 $urlMsi86 $urlAutoSetup"
+          Write-Host "urls to use: $installerUrls"
+
+          $package = '${{ env.PACKAGE_NAME }}'
+          $ghToken = '${{ secrets.FERDIUM_WINGET_PAT }}'
+
+          $command = ".\wingetcreate.exe update $package -s -v '${{ env.last_version }}' -u $installerUrls -t $ghToken"
+          Write-Host $command
+
+
+
+  winget_release:
+    name: "Update winget after publish: ${{ github.event.inputs.message }}"
+    if: ${{ github.event_name == 'release' }}
+    runs-on: windows-latest
+    steps:
+      - name: Check release type
+        run: |
+          PRERELEASE_VERSION="${{ github.event.release.tag_name == 'true' }}"
+
+          if [[ $PRERELEASE_VERSION == "true" && ${{ contains(github.event.release.tag_name, 'nightly') }} ]]; then
+            # use the nightly version
+            PACKAGE_NAME="Ferdium.Ferdium.Nightly"
+          elif [[ $PRERELEASE_VERSION == "true" && ${{ contains(github.event.release.tag_name, 'beta') }} ]]; then
+            PACKAGE_NAME="Ferdium.Ferdium.Beta"
+          else
+            PACKAGE_NAME="Ferdium.Ferdium"
+          fi
+          echo "Using package $PACKAGE_NAME with pre-release $PRERELEASE_VERSION"
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+        shell: bash
+      - name: Send update to winget
+        run: |
+          iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+
+          $ghobject = Get-Content '${{ github.event_path }}' | ConvertFrom-Json
+          $assets = $ghobject.release.assets
+
+          $urlMsi64 = $assets | Where-Object -Property name -match '-x64.msi' | Select -ExpandProperty browser_download_url
+          $urlMsi86 = $assets | Where-Object -Property name -match '-ia32.msi' | Select -ExpandProperty browser_download_url
+          $urlAutoSetup = $assets | Where-Object -Property name -CLike '*-win-AutoSetup*.exe' | Select -ExpandProperty browser_download_url
+
+          $installerUrls = $urlMsi64 $urlMsi86 $urlAutoSetup
+          echo "urls to use: $installerUrls"
+
+          $version = $ghobject.release.tag_name
+          $package = '${{ env.PACKAGE_NAME }}'
+          $ghToken = '${{ secrets.FERDIUM_WINGET_PAT }}'
+
+          $command = ".\wingetcreate.exe update $package -s -v $($version.Trim('v')) -u $installerUrls -t $ghToken"
+          Write-Host $command
+
+  test_bash:
+    name: "Test parsing using jq on bash instead of pws"
+    if: ${{ github.event_name == 'workflow_dispatch' && contains(github.event.inputs.message, '[jq]') }}
+    runs-on: windows-latest
+    steps:
+      - name: Get info url
+        run: |
+          RELEASE=$(curl https://api.github.com/repos/ferdium/ferdium-app/releases | jq -r '.[1]')
+          echo "$RELEASE" | jq '.assets[] | {name: .name, url: .browser_download_url} | select(.name |endswith("-x64.msi") or endswith("-ia32.msi") or (startswith("Ferdium-win-AutoSetup") and endswith(".exe")))'
+          SETUP= echo "$RELEASE" | jq '.assets[] | select(.name | test("Ferdium-win-AutoSetup*") and endswith(".exe")) | .browser_download_url'
+        # etc
+        shell: bash
