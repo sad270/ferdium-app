@@ -45,6 +45,14 @@ const styles = theme => ({
       backgroundColor: theme.workspaces.drawer.listItem.activeBackground,
     },
   },
+  icon: {
+    fontSize: 'x-large',
+    borderColor: 'red',
+    borderStyle: 'double',
+    borderWidth: 'medium',
+    padding: '0 6px',
+    marginRight: '6px',
+  },
   name: {
     marginTop: '4px',
     color: theme.workspaces.drawer.listItem.name.color,
@@ -70,6 +78,7 @@ const styles = theme => ({
 interface IProps extends WithStylesProps<typeof styles>, WrappedComponentProps {
   isActive: boolean;
   name: string;
+  icon: string;
   onClick: MouseEventHandler<HTMLInputElement>;
   services: string[];
   onContextMenuEditClick?: () => void | null;
@@ -83,6 +92,7 @@ class WorkspaceDrawerItem extends Component<IProps> {
       classes,
       isActive,
       name,
+      icon,
       onClick,
       onContextMenuEditClick = null,
       services,
@@ -124,6 +134,14 @@ class WorkspaceDrawerItem extends Component<IProps> {
           `${cmdOrCtrlShortcutKey(false)}+${altKey(false)}`,
         )}
       >
+        <span
+          className={classnames([
+            classes.icon,
+            isActive ? classes.activeName : null,
+          ])}
+        >
+          {icon}
+        </span>
         <span
           className={classnames([
             classes.name,
